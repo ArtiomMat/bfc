@@ -126,12 +126,14 @@ static OpType op_type_from_c(const char c) {
  * Returns if above calling code should break and start lexing a new
  * `Op`.
  */
-static OpType update_op_from_c(Source* src, Op* op) {
+static int update_op_from_c(Source* src, Op* op) {
   const char c = src->text[src->i];
   OpType type = op_type_from_c(c);
   char delim = 0; /* For OP_IF_* flows */
   int j = 0; /* For iteration */
   int j_inc = 0; /* -1 or 1, how much to increment j */
+  int bracket_depth = 0; /* How many nested brackets we saw when searching for a delimiter. */
+  int should_break = 0;
 
   /* First time updating. */
   if (OP_INVALID == op->type) {
@@ -142,24 +144,32 @@ static OpType update_op_from_c(Source* src, Op* op) {
     case OP_IF_0:
       assert('[' == c || ']' == c);
       
-      /* We need to identify delimiters in text and mark them while setting n */
       delim = type == OP_IF_0 ? ']' : '[';
       j_inc = type == OP_IF_0 ? 1 : -1;
+      bracket_depth = 1;
 
       for (j = src->i + j_inc; j >= 0 && j < src->len; j += j_inc) {
-        if (delim == src->text[j]) {
-          /* GG we found it */
+        if (c == src->text[j]) {
+          ++bracket_depth;
+        } else if (delim == src->text[j]) {
+          --bracket_depth;
+
           /* FIXME: This would be in terms of raw text ops but we need a normalization
            * pass so that this n is in units of our optimized Op form.
            */
-          op->n = j - src->i;
-          break;
+          if (!bracket_depth) {
+            /* GG we found it */
+            op->n = j - src->i;
+            break;
+          }
         }
       }
       if (j < 0 || src->len == j) {
         G_ERROR = 1;
         log_error("No delimiter(%c) for %c", delim, c);
       }
+
+      should_break = 1; /* We don't want to accumalate them */
       break;
 
     case OP_MUTATE:
@@ -221,7 +231,7 @@ static OpType update_op_from_c(Source* src, Op* op) {
 
 _done:
   ++src->i;
-  return 0;
+  return should_break;
 }
 
 /*
