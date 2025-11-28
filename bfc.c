@@ -61,8 +61,8 @@ typedef struct{
    * For example, if `text[10]` has `[` and then in `text[15]` there is `]`
    * that then `delimiter_brackets[15]` is marked with `1` to show that it's
    * only a delimiter.
+   char* delimiter_brackets;
    */
-  char* delimiter_brackets;
 
   /*
    * Cache it because we already calculate it anyway.
@@ -83,6 +83,7 @@ static int G_ERROR = 0;
 static void log(LogLevel level, const char* fmt, va_list args){
   printf("%i: ", level);
   vprintf(fmt, args);
+  putc('\n', stdout);
 }
 
 static void log_error(const char* fmt, ...) {
@@ -128,6 +129,9 @@ static OpType op_type_from_c(const char c) {
 static OpType update_op_from_c(Source* src, Op* op) {
   const char c = src->text[src->i];
   OpType type = op_type_from_c(c);
+  char delim = 0; /* For OP_IF_* flows */
+  int j = 0; /* For iteration */
+  int j_inc = 0; /* -1 or 1, how much to increment j */
 
   /* First time updating. */
   if (OP_INVALID == op->type) {
@@ -136,7 +140,26 @@ static OpType update_op_from_c(Source* src, Op* op) {
     switch (type) {
     case OP_IF_NOT_0:
     case OP_IF_0:
-      /* TODO: Implement marking delimiters and such */
+      assert('[' == c || ']' == c);
+      
+      /* We need to identify delimiters in text and mark them while setting n */
+      delim = type == OP_IF_0 ? ']' : '[';
+      j_inc = type == OP_IF_0 ? 1 : -1;
+
+      for (j = src->i + j_inc; j >= 0 && j < src->len; j += j_inc) {
+        if (delim == src->text[j]) {
+          /* GG we found it */
+          /* FIXME: This would be in terms of raw text ops but we need a normalization
+           * pass so that this n is in units of our optimized Op form.
+           */
+          op->n = j - src->i;
+          break;
+        }
+      }
+      if (j < 0 || src->len == j) {
+        G_ERROR = 1;
+        log_error("No delimiter(%c) for %c", delim, c);
+      }
       break;
 
     case OP_MUTATE:
@@ -188,6 +211,7 @@ static OpType update_op_from_c(Source* src, Op* op) {
 
   case OP_IF_0:
   case OP_IF_NOT_0:
+    /* FIXME: Edge cases of '[]]' and '[[]]' seem to lead here. */
     assert(0); /* Should not have gotten here with the OP_IF_* */
     break;
   default:
@@ -244,12 +268,33 @@ _failure:
 }
 
 /*
- * Returns NULL if there was an error.
+ * Returns NULL if there is nothing to tokenize.
  */
 static Op* tokenize(Source* src) {
   Op* first_op = NULL;
   Op* last_op = NULL; /* To know from where to push the next */
   Op* current_op = NULL; /* For iteration */
+
+  /*
+  // first_op = tokenize(src);
+  // if (G_ERROR) {
+  //   goto _failure;
+  // }
+  // if (!first_op) {
+  //   return NULL;
+  // }
+
+  // last_op = first_op;
+  // do {
+  //   last_op -> current_op = tokenize(Source *src)
+  // } while (current_op);
+  */
+
+  do {
+    current_op = tokenize_one_op(src);
+    if (current_op)
+      printf("%i %i\n", current_op->type, current_op->n);
+  } while (current_op);
 
 _failure:
   if (first_op) {
@@ -270,13 +315,16 @@ static Source source_from_text(const char* text) {
   source.text = text;
   source.len = strlen(text);
   source.i = 0;
-  source.delimiter_brackets = calloc(source.len, sizeof(*source.delimiter_brackets));
+  /* source.delimiter_brackets = calloc(source.len, sizeof(*source.delimiter_brackets)); */
 
   return source;
 }
 
 int main(const int argc, const char** argv) {
   /* TODO: Everything up until the first input instruction can be cached. */
+
+  Source example = source_from_text(argv[1]);
+  tokenize(&example);
 
   return 0;
 }
