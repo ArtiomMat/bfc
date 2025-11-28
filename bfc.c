@@ -206,11 +206,18 @@ _done:
  *
  * Modifies `src->i` as seen fit, preparing for the next `tokenize_one_op()`.
  *
- * Returns NULL if there was an error. `*i_ptr` will point to the problematic char.
+ * Returns `NULL` if `src->i` is at the end.
  */
 static Op* tokenize_one_op(Source* src) {
-  Op* op = malloc(sizeof (Op));
+  Op* op = NULL;
 
+  if (src->i >= src->len) {
+    assert(src->i == src->len);
+    return NULL;
+  }
+
+  /* Reset op */
+  op = malloc(sizeof (Op));
   op->next = NULL;
   op->type = OP_INVALID;
   op->n = 0;
