@@ -139,11 +139,19 @@ static OpType update_op_from_c(Source* src, Op* op) {
       /* TODO: Implement marking delimiters and such */
       break;
 
+    case OP_MUTATE:
+      assert('+' == c || '-' == c);
+      op->n += c == '+' ? 1 : -1;
+      break;
+
+    case OP_MOVE:
+      assert('>' == c || '<' == c);
+      op->n += c == '>' ? 1 : -1;
+      break;
+
     case OP_SKIP:
     case OP_PRINT:
     case OP_INPUT:
-    case OP_MUTATE:
-    case OP_MOVE:
       op->n = 1;
       break;
 
