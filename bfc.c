@@ -6,14 +6,13 @@
 #include "lexer.h"
 #include "source.h"
 
-#include <stddef.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
-#include <assert.h>
-#include <string.h>
 
 int G_ERROR = 0;
+
+/* TODO: In x86 ADD sets ZF=1 if src+dst=0, so if the last operation is guaranteed to be ADD for
+ * the bytes(and not ADD for the stack pointer) we can skip CMP and do only JZ/JNZ for [/].
+ */
 
 int main(const int argc, const char** argv) {
   /* TODO: Everything up until the first input instruction can be cached. */
