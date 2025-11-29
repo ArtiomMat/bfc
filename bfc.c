@@ -187,7 +187,7 @@ static int update_op_from_c(Source* src, Op* op) {
 
   /* First time updating. */
   if (OP_INVALID == op->type) {
-    assert(0 == op->n); /* Must be reset if OP_INVALID. */
+    assert(!op->n); /* Must be reset if OP_INVALID. */
 
     switch (type) {
     case OP_SKIP:
@@ -331,11 +331,26 @@ static Op* tokenize(Source* src) {
   // } while (current_op);
   */
 
-  do {
+  while (1) {
     current_op = tokenize_one_op(src);
-    if (current_op)
-      printf("%i %i\n", current_op->type, current_op->n);
-  } while (current_op);
+    if (!current_op) {
+      break;
+    }
+
+    if (!first_op) {
+      first_op = current_op;
+      last_op = current_op;
+    } else {
+      last_op->next = current_op;
+      last_op = current_op;
+    }
+
+    if (G_ERROR) {
+      goto _failure;
+    }
+  }
+
+  return first_op;
 
 _failure:
   if (first_op) {
@@ -363,9 +378,12 @@ static Source source_from_text(const char* text) {
 
 int main(const int argc, const char** argv) {
   /* TODO: Everything up until the first input instruction can be cached. */
+  Op* x;
 
   Source example = source_from_text(argv[1]);
-  tokenize(&example);
+  for (x = tokenize(&example); x; x = x->next) {
+    printf("%i %i\n", x->type, x->n);
+  }
 
   return 0;
 }
