@@ -7,6 +7,15 @@
 #include <string.h>
 
 typedef enum {
+  /* Let the architecture decide. */
+  OVERFLOW_BEHAVIOR_UNDEFINED,
+  /* Check and contain overflows. */
+  OVERFLOW_BEHAVIOR_CAP,
+  /* Check and abort on overflow. */
+  OVERFLOW_BEHAVIOR_ABORT,
+} OverflowBehavior;
+
+typedef enum {
   LOG_LEVEL_FATAL = 10,
   LOG_LEVEL_ERROR = 20,
   LOG_LEVEL_WARN = 30,
@@ -79,6 +88,15 @@ typedef struct{
 
 /* Set to 1 if there was an error somewhere in the pipeline. */
 static int G_ERROR = 0;
+
+static struct {
+  int overflow_behavior;
+  /* Size in sizeof() units. */
+  int byte_size;
+} G_PARAMETERS = {
+  .overflow_behavior = OVERFLOW_BEHAVIOR_UNDEFINED,
+  .byte_size = 1,
+};
 
 static void log(LogLevel level, const char* fmt, va_list args){
   printf("%i: ", level);
