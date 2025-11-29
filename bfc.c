@@ -134,6 +134,7 @@ static int update_op_from_c(Source* src, Op* op) {
   int j_inc = 0; /* -1 or 1, how much to increment j */
   int bracket_depth = 0; /* How many nested brackets we saw when searching for a delimiter. */
   int should_break = 0;
+  int n = 0;
 
   /* First time updating. */
   if (OP_INVALID == op->type) {
@@ -147,8 +148,11 @@ static int update_op_from_c(Source* src, Op* op) {
       delim = type == OP_IF_0 ? ']' : '[';
       j_inc = type == OP_IF_0 ? 1 : -1;
       bracket_depth = 1;
+      n = 0;
 
       for (j = src->i + j_inc; j >= 0 && j < src->len; j += j_inc) {
+        n += j_inc;
+
         if (c == src->text[j]) {
           ++bracket_depth;
         } else if (delim == src->text[j]) {
@@ -159,9 +163,11 @@ static int update_op_from_c(Source* src, Op* op) {
            */
           if (!bracket_depth) {
             /* GG we found it */
-            op->n = j - src->i;
+            op->n = n;
             break;
           }
+        } else if (OP_SKIP == op_type_from_c(src->text[j])) {
+          n -= j_inc;
         }
       }
       if (j < 0 || src->len == j) {
@@ -198,6 +204,10 @@ static int update_op_from_c(Source* src, Op* op) {
     goto _done;
   }
 
+  if (type == OP_SKIP) {
+    goto _done;
+  }
+
   if (type != op->type) {
     return 1; /* Avoid lexing and notify that should break */
   }
@@ -215,13 +225,11 @@ static int update_op_from_c(Source* src, Op* op) {
 
   case OP_INPUT:
   case OP_PRINT:
-  case OP_SKIP:
     ++op->n;
     break;
 
   case OP_IF_0:
   case OP_IF_NOT_0:
-    /* FIXME: Edge cases of '[]]' and '[[]]' seem to lead here. */
     assert(0); /* Should not have gotten here with the OP_IF_* */
     break;
   default:
