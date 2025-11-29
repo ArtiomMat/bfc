@@ -1,5 +1,6 @@
 /* A brainfuck compiler written in ANSI-C */
 
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -60,6 +61,8 @@ typedef struct Op {
  */
 typedef struct{
   const char* text;
+
+  const char* path;
 
   /*
    * The size as `len`.
@@ -408,12 +411,13 @@ _failure:
   return NULL;
 }
 
-static Source source_from_text(const char* text) {
+static Source create_source(const char* path, const char* text) {
   Source source;
 
   assert(text);
 
   source.text = text;
+  source.path = path;
   source.len = strlen(text);
   source.i = 0;
   /* source.delimiter_brackets = calloc(source.len, sizeof(*source.delimiter_brackets)); */
@@ -421,15 +425,84 @@ static Source source_from_text(const char* text) {
   return source;
 }
 
+char* read_from_path(const char* path) {
+  FILE* f = NULL;
+  char* text = NULL;
+  long size = 0;
+  size_t read_size = 0;
+
+  assert(path); /* Path is not supposed to be NULL here */
+
+  if (!(f = fopen(path, "r"))) {
+    log_error(0, "File could not be opened: %s", path);
+    goto _failure;
+  }
+
+  if (fseek(f, 0, SEEK_END)) {
+    goto _seek_failure;
+  }
+  size = ftell(f);
+  if (fseek(f, 0, SEEK_SET)) {
+    goto _seek_failure;
+  }
+
+  text = malloc(size + 1);
+  if (!text) {
+    log_error(0, "Could not allocate buffer for code!");
+  }
+
+  read_size = fread(text, 1, size, f);
+  if (read_size != size) {
+    log_error(0, "Read only %li but expected %i bytes from: %s", read_size, (int)size, path);
+    goto _failure;
+  }
+
+  text[size] = 0;
+
+  fclose(f);
+  return text;
+
+_seek_failure:
+    log_error(0, "Could not seek() in file: %s", path);
+    goto _failure;
+
+_failure:
+  if (f) {
+    fclose(f);
+  }
+  if (text) {
+    free(text);
+  }
+  return NULL;
+}
+
 int main(const int argc, const char** argv) {
   /* TODO: Everything up until the first input instruction can be cached. */
   Op* x;
+  const char* path = "stdin";
+  char* text = NULL;
 
-  Source example = source_from_text(argv[1]);
+  if (argc < 2) {
+    log_error(0, "Missing file!");
+    goto _done;
+  } else {
+    path = argv[1];
+    text = read_from_path(path);
+    if (G_ERROR) {
+      goto _done;
+    }
+  }
+
+  Source example = create_source(path, text);
   for (x = tokenize(&example); x; x = x->next) {
     printf("%i %i\n", x->type, x->n);
   }
 
-  return 0;
+_done:
+  if (text) {
+    free(text);
+  }
+
+  return G_ERROR;
 }
 
