@@ -20,7 +20,7 @@ typedef enum {
   LOG_LEVEL_ERROR = 20,
   LOG_LEVEL_WARN = 30,
   LOG_LEVEL_INFO = 40,
-  LOG_LEVEL_DEBUG = 40,
+  LOG_LEVEL_DEBUG = 50,
 } LogLevel;
 
 typedef enum {
@@ -98,17 +98,60 @@ static struct {
   .byte_size = 1,
 };
 
-static void log(LogLevel level, const char* fmt, va_list args){
-  printf("%i: ", level);
-  vprintf(fmt, args);
+static void log(FILE* f, const LogLevel level, const Source* src, const char* fmt, va_list args){
+  const char* level_str = NULL;
+  int line = 1;
+  int column = 1;
+  int i = 0;
+
+  switch (level) {
+  case LOG_LEVEL_FATAL:
+    level_str = "FATAL";
+    break;
+  case LOG_LEVEL_ERROR:
+    level_str = "ERROR";
+    break;
+  case LOG_LEVEL_WARN:
+    level_str = "WARNING";
+    break;
+  case LOG_LEVEL_INFO:
+    level_str = "INFO";
+    break;
+  case LOG_LEVEL_DEBUG:
+    level_str = "DEBUG";
+    break;
+  default:
+    level_str = "LOG";
+    break;
+  }
+
+  fprintf(f, "%s: ", level_str);
+
+  if (src) {
+    for (i = 0; i < src->i; ++i, ++column) {
+      if ('\n' == src->text[i]) {
+        ++line;
+        column = 0;
+      }
+    }
+  
+    fprintf(f, "%s:%i:%i: ", src->path, line, column);
+  }
+
+  vfprintf(f, fmt, args);
   putc('\n', stdout);
 }
 
-static void log_error(const char* fmt, ...) {
+/*
+ * Sets `G_ERROR` to `1`.
+ */
+static void log_error(const Source* src, const char* fmt, ...) {
   va_list args;
 
+  G_ERROR = 1;
+
   va_start(args, fmt);
-  log(LOG_LEVEL_ERROR, fmt, args);
+  log(stderr, LOG_LEVEL_ERROR, src, fmt, args);
   va_end(args);
 }
 
@@ -179,8 +222,7 @@ static int find_delimiter_for_if(const Source* src) {
     }
   }
 
-  G_ERROR = 1;
-  log_error("No delimiter(%c) for %c", delim, c);
+  log_error(src, "No delimiter(%c) for %c", delim, c);
   return 0;
 }
 
@@ -333,21 +375,6 @@ static Op* tokenize(Source* src) {
   Op* first_op = NULL;
   Op* last_op = NULL; /* To know from where to push the next */
   Op* current_op = NULL; /* For iteration */
-
-  /*
-  // first_op = tokenize(src);
-  // if (G_ERROR) {
-  //   goto _failure;
-  // }
-  // if (!first_op) {
-  //   return NULL;
-  // }
-
-  // last_op = first_op;
-  // do {
-  //   last_op -> current_op = tokenize(Source *src)
-  // } while (current_op);
-  */
 
   while (1) {
     current_op = tokenize_one_op(src);
