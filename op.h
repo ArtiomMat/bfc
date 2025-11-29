@@ -18,19 +18,43 @@ typedef enum {
   /* n = How many bytes to print */
   OP_PRINT,
   
-  /* n = How many operations to jump */
+  /*
+   * During lexing `n` = How many operations in code to jump.
+   * After normalization `n` = How many `Op` to jump.
+   */
   OP_IF_0,
-  /* n = How many operations to jump */
+  /*
+   * During lexing `n` = How many operations in code to jump.
+   * After normalization `n` = How many `Op` to jump.
+   */
   OP_IF_NOT_0,
 } OpType;
 
 typedef struct Op {
   /* NULL means no next */
   struct Op* next;
+  
   OpType type;
-  /* Depends on type, read OpType */
+
+  /*
+   * Depends on type and stage, read OpType.
+   */
   int n;
+
+  /*
+   * Relevant only for assembly.
+   * Virtual-address in executable where the operation starts.
+   *
+   * NOTE: Operation may be any amount of bytes, and can be variable even
+   * for the same `type`, if presented with optimization opportunities.
+   */
+  int vaddress;
 } Op;
+
+/*
+ * Sets `op` to 0 equivalents, predominantly `type` is set to `OP_INVALID`
+ */
+void reset_op(Op* op);
 
 OpType op_type_from_c(const char c);
 

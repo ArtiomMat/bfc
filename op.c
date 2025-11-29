@@ -3,6 +3,13 @@
 #include <assert.h>
 #include <stdlib.h>
 
+void reset_op(Op* op) {
+  op->next = NULL;
+  op->type = OP_INVALID;
+  op->n = 0;
+  op->vaddress = 0;
+}
+
 OpType op_type_from_c(const char c) {
   switch (c) {
   case '+':
