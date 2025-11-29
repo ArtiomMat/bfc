@@ -101,7 +101,7 @@ static struct {
   .byte_size = 1,
 };
 
-static void log(FILE* f, const LogLevel level, const Source* src, const char* fmt, va_list args){
+static void bfc_log(FILE* f, const LogLevel level, const Source* src, const char* fmt, va_list args){
   const char* level_str = NULL;
   int line = 1;
   int column = 1;
@@ -154,7 +154,7 @@ static void log_error(const Source* src, const char* fmt, ...) {
   G_ERROR = 1;
 
   va_start(args, fmt);
-  log(stderr, LOG_LEVEL_ERROR, src, fmt, args);
+  bfc_log(stderr, LOG_LEVEL_ERROR, src, fmt, args);
   va_end(args);
 }
 
