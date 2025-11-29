@@ -38,10 +38,6 @@ int main(const int argc, const char** argv) {
   if (G_ERROR) {
     goto _done;
   }
-  
-  for (; ops; ops = ops->next) {
-    printf("%i %i\n", ops->type, ops->n);
-  }
 
 _done:
   if (ops) {

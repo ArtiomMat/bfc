@@ -189,6 +189,8 @@ static Op* lex_one_op(Source* src) {
     goto _nothing;
   }
 
+  log_debug(src, "lexer: Op{type=%s, n=%i}", str_from_op_type(op->type), op->n);
+
   return op;
 
 _nothing:

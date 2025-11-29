@@ -6,6 +6,12 @@
 
 #include "source.h"
 
+#ifdef NDEBUG
+#  define LOG_LEVEL_MAX LOG_LEVEL_INFO
+#else
+#  define LOG_LEVEL_MAX LOG_LEVEL_DEBUG
+#endif
+
 typedef enum {
   LOG_LEVEL_FATAL = 10,
   LOG_LEVEL_ERROR = 20,
@@ -15,7 +21,13 @@ typedef enum {
 } LogLevel;
 
 void bfc_log(FILE* f, const LogLevel level, const Source* src, const char* fmt, va_list args);
+
+/*
+ * Sets `G_ERROR` to `1`.
+ */
 void log_error(const Source* src, const char* fmt, ...);
+
+void log_debug(const Source* src, const char* fmt, ...);
 
 #endif /* define BFC_LOG_H */
 

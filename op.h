@@ -34,6 +34,8 @@ typedef struct Op {
 
 OpType op_type_from_c(const char c);
 
+const char* str_from_op_type(OpType type);
+
 void free_ops(Op* ops);
 
 #endif /* define BFC_OP_H */

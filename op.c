@@ -24,6 +24,27 @@ OpType op_type_from_c(const char c) {
   }
 }
 
+const char* str_from_op_type(OpType type) {
+  switch (type) {
+  case OP_PRINT:
+    return "PRINT";
+  case OP_INPUT:
+    return "INPUT";
+  case OP_MUTATE:
+    return "MUTATE";
+  case OP_MOVE:
+    return "MOVE";
+  case OP_IF_0:
+    return "IF0";
+  case OP_IF_NOT_0:
+    return "IF!0";
+  case OP_SKIP:
+    return "NOP";
+  default:
+    return "INVALID";
+  };
+}
+
 void free_ops(Op* first_op) {
   Op* current_op;
 

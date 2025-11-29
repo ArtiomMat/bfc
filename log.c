@@ -10,6 +10,10 @@ void bfc_log(FILE* f, const LogLevel level, const Source* src, const char* fmt, 
   int column = 1;
   int i = 0;
 
+  if (level > LOG_LEVEL_MAX) {
+    return;
+  }
+
   switch (level) {
   case LOG_LEVEL_FATAL:
     level_str = "FATAL";
@@ -48,9 +52,6 @@ void bfc_log(FILE* f, const LogLevel level, const Source* src, const char* fmt, 
   putc('\n', stdout);
 }
 
-/*
- * Sets `G_ERROR` to `1`.
- */
 void log_error(const Source* src, const char* fmt, ...) {
   va_list args;
 
@@ -58,6 +59,14 @@ void log_error(const Source* src, const char* fmt, ...) {
 
   va_start(args, fmt);
   bfc_log(stderr, LOG_LEVEL_ERROR, src, fmt, args);
+  va_end(args);
+}
+
+void log_debug(const Source* src, const char* fmt, ...) {
+  va_list args;
+
+  va_start(args, fmt);
+  bfc_log(stderr, LOG_LEVEL_DEBUG, src, fmt, args);
   va_end(args);
 }
 
