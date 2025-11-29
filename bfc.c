@@ -176,6 +176,9 @@ static int find_delimiter_for_if(const Source* src) {
  *
  * Returns if above calling code should break and start lexing a new
  * `Op`.
+ *
+ * Returns unchanged `OP_INVALID` if the character is `OP_SKIP`, this is done to
+ * prevent an all-too-expensive removal phase of `OP_SKIP` from the list.
  */
 static int update_op_from_c(Source* src, Op* op) {
   const char c = src->text[src->i];
@@ -187,6 +190,9 @@ static int update_op_from_c(Source* src, Op* op) {
     assert(0 == op->n); /* Must be reset if OP_INVALID. */
 
     switch (type) {
+    case OP_SKIP:
+      goto _done; /* We ignore these */
+
     case OP_IF_NOT_0:
     case OP_IF_0:
       assert('[' == c || ']' == c);
@@ -204,7 +210,6 @@ static int update_op_from_c(Source* src, Op* op) {
       op->n = c == '>' ? 1 : -1;
       break;
 
-    case OP_SKIP:
     case OP_PRINT:
     case OP_INPUT:
       op->n = 1;
@@ -217,10 +222,6 @@ static int update_op_from_c(Source* src, Op* op) {
 
     op->type = type;
 
-    goto _done;
-  }
-
-  if (type == OP_SKIP) {
     goto _done;
   }
 
@@ -285,7 +286,7 @@ static Op* tokenize_one_op(Source* src) {
     int should_break = update_op_from_c(src, op);
     
     if (G_ERROR) {
-      goto _failure;
+      goto _nothing;
     }
 
     if (should_break) {
@@ -293,9 +294,14 @@ static Op* tokenize_one_op(Source* src) {
     }
   }
 
+  if (OP_INVALID == op->type) {
+    assert(src->i >= src->len); /* Should be the only scenario where we still have OP_INVALID. */
+    goto _nothing;
+  }
+
   return op;
 
-_failure:
+_nothing:
   if (op) {
     free(op);
   }
