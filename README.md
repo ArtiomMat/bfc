@@ -1,4 +1,7 @@
 # BrainFuck Compiler
+
+![](bfc.png)
+
 A native Brainfuck compiler, written in ANSI C.
 
 Part of a fuller love letter to ANSI C.
