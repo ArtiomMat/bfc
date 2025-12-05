@@ -61,6 +61,8 @@ static int find_delimiter_for_if(const Source* src, Op* op) {
  *
  * Modifies `src->i` as seen fit, preparing for the next `update_op_from_c()`.
  *
+ * Modifies `op->src_i` to *EVENTUALLY* point to the correct `src->i`.
+ *
  * If `op->type` is not `OP_INVALID` and `c` is not of the same type,
  * we avoid lexing it because a new `Op` needs to be created.
  *
@@ -78,6 +80,7 @@ static int update_op_from_c(Source* src, Op* op) {
   /* First time updating. */
   if (OP_INVALID == op->type) {
     assert(!op->n); /* Must be reset if OP_INVALID. */
+    op->src_i = src->i;
 
     switch (type) {
     case OP_SKIP:
@@ -178,7 +181,6 @@ static int lex_one_op(Source* src, Op** op_ptr) {
   /* Reset op */
   op = malloc(sizeof (Op));
   reset_op(op);
-  op->src_i = src->i;
 
   for (/* Already initialized */; src->i < src->len; /* Inside */) {
     int should_break = update_op_from_c(src, op);
