@@ -37,9 +37,13 @@ typedef struct Op {
   OpType type;
 
   /*
-   * Index in source code
+   * First index in source code where it starts.
    */
-  int src_i;
+  int src_start;
+  /*
+   * Last index in source code where it ends.
+   */
+  int src_end;
 
   /*
    * Depends on type and stage, read OpType.

@@ -29,7 +29,7 @@ static int should_prune(const Op* op) {
 /* We use it twice so just to avoid duplication */
 #define LOG_PRUNE(SRC, OP) \
   do { \
-    (SRC)->i = (OP)->src_i; \
+    (SRC)->i = (OP)->src_start; \
     log_warn(SRC, "optimizer: %s sequence evaluates to NOP here.", str_from_op_type((OP)->type)); \
   } while (0)
 
@@ -100,7 +100,7 @@ OptimizationInfo optimize_ops(Source* src, Op** ops) {
 
   optimiziation_info.first_input_op = find_first_input_op(*ops);
   if (optimiziation_info.first_input_op) {
-    src->i = optimiziation_info.first_input_op->src_i;
+    src->i = optimiziation_info.first_input_op->src_start;
     log_debug(src, "optimizer: All code up to here can be evaluated at compile-time.");
   } else {
     log_debug(src, "optimizer: The entire program is can be evaluated at compile-time.");

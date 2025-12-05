@@ -80,7 +80,7 @@ static int update_op_from_c(Source* src, Op* op) {
   /* First time updating. */
   if (OP_INVALID == op->type) {
     assert(!op->n); /* Must be reset if OP_INVALID. */
-    op->src_i = src->i;
+    op->src_start = src->i;
 
     switch (type) {
     case OP_SKIP:
