@@ -4,6 +4,7 @@
 #include "log.h"
 #include "op.h"
 #include "lexer.h"
+#include "optimizer.h"
 #include "source.h"
 
 #include <stdlib.h>
@@ -19,6 +20,8 @@ int main(const int argc, const char** argv) {
   const char* path = "stdin";
   char* text = NULL;
   int success = 1;
+  Source src;
+  OptimizationInfo optimization_info;
 
   if (argc < 2) {
     log_error(0, "Missing file!");
@@ -32,12 +35,14 @@ int main(const int argc, const char** argv) {
     }
   }
 
-  Source example = create_source(path, text);
+  src = create_source(path, text);
   
-  success = lex(&example, &ops);
+  success = lex(&src, &ops);
   if (!success) {
     goto done_;
   }
+
+  optimization_info = optimize_ops(&src, &ops);
 
 done_:
   if (ops) {
