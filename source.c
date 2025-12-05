@@ -6,6 +6,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+void set_source_i(Source* src, const Op* op) {
+  src->i = op->src_start;
+  src->i_end = op->src_end;
+}
+
 Source create_source(const char* path, const char* text) {
   Source source;
 
@@ -15,6 +20,7 @@ Source create_source(const char* path, const char* text) {
   source.path = path;
   source.len = strlen(text);
   source.i = 0;
+  source.i_end = 0;
   /* source.delimiter_brackets = calloc(source.len, sizeof(*source.delimiter_brackets)); */
 
   return source;

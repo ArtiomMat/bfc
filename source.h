@@ -5,6 +5,7 @@
  * Represents an extended version of the source code,
  * with members to easen lexing.
  */
+#include "op.h"
 typedef struct{
   const char* text;
 
@@ -33,7 +34,21 @@ typedef struct{
    * Index within text.
    */
   int i;
+
+  /*
+   * For logging/diagnostic purposes of marking code from `i` to `i_end`.
+   *
+   * End index(usually obtained from `Op.src_end`.
+   *
+   * If `0` will be ignored when trying to mark code, only `i` will be used.
+   */
+  int i_end;
 } Source;
+
+/*
+ * Updates `src->i` and `src->i_end` according to `op->src_start` and `op->src_end`.
+ */
+void set_source_i(Source* src, const Op* op);
 
 Source create_source(const char* path, const char* text);
 

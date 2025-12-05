@@ -7,7 +7,8 @@ void reset_op(Op* op) {
   op->next = NULL;
   op->type = OP_INVALID;
   op->src_start = -1;
-  op->src_end = -1;
+  /* 0 because of Source.i_end spec */
+  op->src_end = 0;
   op->n = 0;
   op->vaddress = 0;
 }
