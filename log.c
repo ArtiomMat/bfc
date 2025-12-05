@@ -67,3 +67,11 @@ void log_debug(const Source* src, const char* fmt, ...) {
   va_end(args);
 }
 
+void log_warn(const Source* src, const char* fmt, ...) {
+  va_list args;
+
+  va_start(args, fmt);
+  bfc_log(stderr, LOG_LEVEL_WARN, src, fmt, args);
+  va_end(args);
+}
+

@@ -24,6 +24,8 @@ void bfc_log(FILE* f, const LogLevel level, const Source* src, const char* fmt, 
 
 void log_error(const Source* src, const char* fmt, ...);
 
+void log_warn(const Source* src, const char* fmt, ...);
+
 void log_debug(const Source* src, const char* fmt, ...);
 
 #endif /* define BFC_LOG_H */
