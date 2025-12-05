@@ -41,7 +41,7 @@ typedef struct Op {
    */
   int src_start;
   /*
-   * Last index in source code where it ends.
+   * Index of the terminating character for this `Op`.
    */
   int src_end;
 

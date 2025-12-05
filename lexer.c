@@ -191,6 +191,7 @@ static int lex_one_op(Source* src, Op** op_ptr) {
     }
 
     if (should_break) {
+      op->src_end = src->i;
       break;
     }
   }
@@ -200,7 +201,10 @@ static int lex_one_op(Source* src, Op** op_ptr) {
     goto nothing_;
   }
 
-  log_debug(src, "lexer: Op{type=%s, n=%i}", str_from_op_type(op->type), op->n);
+  log_debug(
+    src, "lexer: Op{type=%s, n=%i, start=%i, end=%i}",
+    str_from_op_type(op->type), op->n, op->src_start, op->src_end
+  );
 
   goto done_;
 
