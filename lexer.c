@@ -123,6 +123,11 @@ static int update_op_from_c(Source* src, Op* op) {
   }
 
   if (type != op->type) {
+    /* TODO: Test this more rigorously */
+    if (OP_SKIP == op->type) {
+      /* But, we can just skip the OP_SKIP */
+      goto done_;
+    }
     /* Means we need to start lexing a new Op */
     return 1;
   }
