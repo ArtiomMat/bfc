@@ -16,14 +16,12 @@
  */
 typedef struct {
     /*
-     * Index in the `Op` list.
-     *
-     * If -1 there is none, then entire program can be evaluated at compile time
+     * If `NULL` there is none, then entire program can be evaluated at compile time
      * into a single print call.
      *
-     * If positive, then everything up to that index can be cached.
+     * If valid, then everything up to that `Op` can be cached.
      */
-    int input_op_i;
+    Op* first_input_op;
 } OptimizationInfo;
 
 /*

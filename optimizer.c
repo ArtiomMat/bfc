@@ -79,12 +79,32 @@ done_:
   return first_op;
 }
 
+static Op* find_first_input_op(Op* ops) {
+  Op* op;
+
+  for (op = ops; op; op = op->next) {
+    if (OP_INPUT == op->type) {
+      return op;
+    }
+  }
+
+  return NULL;
+}
+
 OptimizationInfo optimize_ops(Source* src, Op** ops) {
   OptimizationInfo optimiziation_info = {
-    .input_op_i = -1,
+    .first_input_op = NULL,
   };
 
   *ops = prune_null_ops(src, *ops);
+
+  optimiziation_info.first_input_op = find_first_input_op(*ops);
+  if (optimiziation_info.first_input_op) {
+    src->i = optimiziation_info.first_input_op->src_i;
+    log_debug(src, "optimizer: All code up to here can be evaluated at compile-time.");
+  } else {
+    log_debug(src, "optimizer: The entire program is can be evaluated at compile-time.");
+  }
 
   return optimiziation_info;
 }
