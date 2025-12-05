@@ -30,15 +30,15 @@ char* read_from_path(const char* path) {
 
   if (!(f = fopen(path, "r"))) {
     log_error(0, "File could not be opened: %s", path);
-    goto _failure;
+    goto failure_;
   }
 
   if (fseek(f, 0, SEEK_END)) {
-    goto _seek_failure;
+    goto seek_failure_;
   }
   size = ftell(f);
   if (fseek(f, 0, SEEK_SET)) {
-    goto _seek_failure;
+    goto seek_failure_;
   }
 
   text = malloc(size + 1);
@@ -49,7 +49,7 @@ char* read_from_path(const char* path) {
   read_size = fread(text, 1, size, f);
   if (read_size != size) {
     log_error(0, "Read only %li but expected %i bytes from: %s", read_size, (int)size, path);
-    goto _failure;
+    goto failure_;
   }
 
   text[size] = 0;
@@ -57,11 +57,11 @@ char* read_from_path(const char* path) {
   fclose(f);
   return text;
 
-_seek_failure:
+seek_failure_:
     log_error(0, "Could not seek() in file: %s", path);
-    goto _failure;
+    goto failure_;
 
-_failure:
+failure_:
   if (f) {
     fclose(f);
   }

@@ -81,7 +81,7 @@ static int update_op_from_c(Source* src, Op* op) {
 
     switch (type) {
     case OP_SKIP:
-      goto _done; /* We ignore these */
+      goto done_; /* We ignore these */
 
     case OP_IF_NOT_0:
     case OP_IF_0:
@@ -116,7 +116,7 @@ static int update_op_from_c(Source* src, Op* op) {
 
     op->type = type;
 
-    goto _done;
+    goto done_;
   }
 
   if (type != op->type) {
@@ -149,7 +149,7 @@ static int update_op_from_c(Source* src, Op* op) {
     break;
   }
 
-_done:
+done_:
   ++src->i;
   return should_break;
 }
@@ -184,7 +184,7 @@ static int lex_one_op(Source* src, Op** op_ptr) {
     
     if (-1 == should_break) {
       success = 0;
-      goto _nothing;
+      goto nothing_;
     }
 
     if (should_break) {
@@ -194,20 +194,20 @@ static int lex_one_op(Source* src, Op** op_ptr) {
 
   if (OP_INVALID == op->type) {
     assert(src->i >= src->len); /* Should be the only scenario where we still have OP_INVALID. */
-    goto _nothing;
+    goto nothing_;
   }
 
   log_debug(src, "lexer: Op{type=%s, n=%i}", str_from_op_type(op->type), op->n);
 
-  goto _done;
+  goto done_;
 
-_nothing:
+nothing_:
   if (op) {
     free(op);
     op = NULL;
   }
 
-_done:
+done_:
   *op_ptr = op;
   return success;
 }
@@ -235,19 +235,19 @@ int lex(Source* src, Op** first_op_ptr) {
     }
 
     if (!success) {
-      goto _failure;
+      goto failure_;
     }
   }
 
-  goto _done;
+  goto done_;
 
-_failure:
+failure_:
   if (first_op) {
     free_ops(first_op);
     first_op = NULL;
   }
 
-_done:
+done_:
   *first_op_ptr = first_op;
   return success;
 }

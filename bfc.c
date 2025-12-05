@@ -22,13 +22,13 @@ int main(const int argc, const char** argv) {
 
   if (argc < 2) {
     log_error(0, "Missing file!");
-    goto _done;
+    goto done_;
   } else {
     path = argv[1];
     text = read_from_path(path);
     if (!text) {
       success = 0;
-      goto _done;
+      goto done_;
     }
   }
 
@@ -36,10 +36,10 @@ int main(const int argc, const char** argv) {
   
   success = lex(&example, &ops);
   if (!success) {
-    goto _done;
+    goto done_;
   }
 
-_done:
+done_:
   if (ops) {
     free_ops(ops);
   }
