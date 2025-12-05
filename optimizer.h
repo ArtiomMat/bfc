@@ -2,6 +2,7 @@
 #define BFC_OPTIMIZER_H
 
 #include "op.h"
+#include "source.h"
 
 /* TODO: Prune null OP_MUTATE and OP_MOVE, if their n is 0. */
 /* TODO: Optimize logical flows that are never reached. */
@@ -31,6 +32,6 @@ typedef struct {
  *
  * Returns additional information for assembly stage, see documentation for `OptimizationInfo`
  */
-OptimizationInfo optimize_ops(Op* ops);
+OptimizationInfo optimize_ops(Source* src, Op** ops);
 
 #endif /* define BFC_OPTIMIZER_H */
