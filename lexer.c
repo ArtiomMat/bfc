@@ -1,6 +1,5 @@
 #include "lexer.h"
 #include "log.h"
-#include "bfc.h"
 #include "op.h"
 
 #include <assert.h>
@@ -9,10 +8,10 @@
 /*
  * `src->text[src->i]` is asserted to point to the bracket.
  *
- * Sets error if there is no matching delimiter.
- *
- * Returns `op->n`, which in other words is the distance in non `OP_SKIP`
+ * On success, returns `1`, and sets `op->n` to the distance in non `OP_SKIP`
  * characters from this bracket, if it's `]` it should be negative.
+ * 
+ * On failure, `0` if delimiter is not found.
  *
  * NOTE: Don't forget, the returned `n` is not normalized to `Op` units.
  * You must do so manually.
@@ -20,7 +19,7 @@
  * `OP_SKIP` is ignored because we can do so in this stage and it will
  * prevent more complicated computation later due to getting rid of them.
  */
-static int find_delimiter_for_if(const Source* src) {
+static int find_delimiter_for_if(const Source* src, Op* op) {
   const char c = src->text[src->i];
   const OpType type = op_type_from_c(c);
   /* What is the delimiter we are looking for? */
@@ -44,7 +43,8 @@ static int find_delimiter_for_if(const Source* src) {
 
       if (!bracket_depth) {
         /* GG we found it */
-        return n;
+        op->n = n;
+        return 1;
       }
     } else if (OP_SKIP == op_type_from_c(src->text[j])) {
       /* OP_SKIP are not registered */
@@ -64,16 +64,16 @@ static int find_delimiter_for_if(const Source* src) {
  * If `op->type` is not `OP_INVALID` and `c` is not of the same type,
  * we avoid lexing it because a new `Op` needs to be created.
  *
- * Returns if above calling code should break and start lexing a new
+ * On success, returns if above calling code should break and start lexing a new
  * `Op`.
  *
- * Returns unchanged `OP_INVALID` if the character is `OP_SKIP`, this is done to
- * prevent an all-too-expensive removal phase of `OP_SKIP` from the list.
+ * On failure, returns `-1`, state of `src->i` is unchanged.
  */
 static int update_op_from_c(Source* src, Op* op) {
   const char c = src->text[src->i];
   OpType type = op_type_from_c(c);
   int should_break = 0;
+  int success = 1;
 
   /* First time updating. */
   if (OP_INVALID == op->type) {
@@ -86,7 +86,11 @@ static int update_op_from_c(Source* src, Op* op) {
     case OP_IF_NOT_0:
     case OP_IF_0:
       assert('[' == c || ']' == c);
-      op->n = find_delimiter_for_if(src);
+      success = find_delimiter_for_if(src, op);
+      if (!success) {
+        return -1;
+      }
+
       should_break = 1; /* We don't want to accumalate them */
       break;
 
@@ -156,14 +160,19 @@ _done:
  *
  * Modifies `src->i` as seen fit, preparing for the next `tokenize_one_op()`.
  *
- * Returns `NULL` if `src->i` is at the end.
+ * On success, returns `1`, and sets `*op_ptr` to `NULL` if `src->i` is at the end, or sets it to
+ * some valid `Op` for the sequence of operations we lexed.
+ *
+ * On failure, returns `0`.
  */
-static Op* lex_one_op(Source* src) {
+static int lex_one_op(Source* src, Op** op_ptr) {
   Op* op = NULL;
+  int success = 1;
 
   if (src->i >= src->len) {
     assert(src->i == src->len);
-    return NULL;
+    *op_ptr = NULL;
+    return 1;
   }
 
   /* Reset op */
@@ -173,7 +182,8 @@ static Op* lex_one_op(Source* src) {
   for (/* Already initialized */; src->i < src->len; /* Inside */) {
     int should_break = update_op_from_c(src, op);
     
-    if (G_ERROR) {
+    if (-1 == should_break) {
+      success = 0;
       goto _nothing;
     }
 
@@ -189,45 +199,56 @@ static Op* lex_one_op(Source* src) {
 
   log_debug(src, "lexer: Op{type=%s, n=%i}", str_from_op_type(op->type), op->n);
 
-  return op;
+  goto _done;
 
 _nothing:
   if (op) {
     free(op);
+    op = NULL;
   }
-  return NULL;
+
+_done:
+  *op_ptr = op;
+  return success;
 }
 
-Op* lex(Source* src) {
+int lex(Source* src, Op** first_op_ptr) {
   Op* first_op = NULL;
   Op* last_op = NULL; /* To know from where to push the next */
   Op* current_op = NULL; /* For iteration */
+  int success = 0;
 
   while (1) {
-    current_op = lex_one_op(src);
+    success = lex_one_op(src, &current_op);
     if (!current_op) {
       break;
     }
 
     if (!first_op) {
+      /* current_op is the actual first */
       first_op = current_op;
       last_op = current_op;
     } else {
+      /* current_op is appended */
       last_op->next = current_op;
       last_op = current_op;
     }
 
-    if (G_ERROR) {
+    if (!success) {
       goto _failure;
     }
   }
 
-  return first_op;
+  goto _done;
 
 _failure:
   if (first_op) {
     free_ops(first_op);
+    first_op = NULL;
   }
-  return NULL;
+
+_done:
+  *first_op_ptr = first_op;
+  return success;
 }
 

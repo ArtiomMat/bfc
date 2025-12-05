@@ -5,8 +5,10 @@
 #include "op.h"
 
 /*
- * Returns NULL if there is nothing to tokenize.
+ * On success, returns `1` and sets `*first_op_ptr` to the first `Op` lexed.
+ *
+ * On failure, returns `0`.
  */
-Op* lex(Source* src);
+int lex(Source* src, Op** first_op_ptr);
 
 #endif /* define BFC_LEXER_H */

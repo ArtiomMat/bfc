@@ -37,6 +37,9 @@ typedef struct{
 
 Source create_source(const char* path, const char* text);
 
+/*
+ * Return `NULL` if failed.
+ */
 char* read_from_path(const char* path);
 
 #endif /* BFC_SOURCE_H */

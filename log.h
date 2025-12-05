@@ -22,9 +22,6 @@ typedef enum {
 
 void bfc_log(FILE* f, const LogLevel level, const Source* src, const char* fmt, va_list args);
 
-/*
- * Sets `G_ERROR` to `1`.
- */
 void log_error(const Source* src, const char* fmt, ...);
 
 void log_debug(const Source* src, const char* fmt, ...);

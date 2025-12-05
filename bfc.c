@@ -8,8 +8,6 @@
 
 #include <stdlib.h>
 
-int G_ERROR = 0;
-
 /* TODO: In x86 ADD sets ZF=1 if src+dst=0, so if the last operation is guaranteed to be ADD for
  * the bytes(and not ADD for the stack pointer) we can skip CMP and do only JZ/JNZ for [/].
  */
@@ -20,6 +18,7 @@ int main(const int argc, const char** argv) {
   Op* ops;
   const char* path = "stdin";
   char* text = NULL;
+  int success = 1;
 
   if (argc < 2) {
     log_error(0, "Missing file!");
@@ -27,15 +26,16 @@ int main(const int argc, const char** argv) {
   } else {
     path = argv[1];
     text = read_from_path(path);
-    if (G_ERROR) {
+    if (!text) {
+      success = 0;
       goto _done;
     }
   }
 
   Source example = create_source(path, text);
   
-  ops = lex(&example);
-  if (G_ERROR) {
+  success = lex(&example, &ops);
+  if (!success) {
     goto _done;
   }
 
@@ -47,6 +47,6 @@ _done:
     free(text);
   }
 
-  return G_ERROR;
+  return !success;
 }
 

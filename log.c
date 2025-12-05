@@ -1,5 +1,4 @@
 #include "log.h"
-#include "bfc.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -54,8 +53,6 @@ void bfc_log(FILE* f, const LogLevel level, const Source* src, const char* fmt, 
 
 void log_error(const Source* src, const char* fmt, ...) {
   va_list args;
-
-  G_ERROR = 1;
 
   va_start(args, fmt);
   bfc_log(stderr, LOG_LEVEL_ERROR, src, fmt, args);
