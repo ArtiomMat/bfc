@@ -178,6 +178,7 @@ static int lex_one_op(Source* src, Op** op_ptr) {
   /* Reset op */
   op = malloc(sizeof (Op));
   reset_op(op);
+  op->src_i = src->i;
 
   for (/* Already initialized */; src->i < src->len; /* Inside */) {
     int should_break = update_op_from_c(src, op);

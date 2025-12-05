@@ -37,6 +37,11 @@ typedef struct Op {
   OpType type;
 
   /*
+   * Index in source code
+   */
+  int src_i;
+
+  /*
    * Depends on type and stage, read OpType.
    */
   int n;
