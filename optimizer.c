@@ -174,6 +174,7 @@ static Op* find_first_input_op(Op* ops) {
 OptimizationInfo optimize_ops(Source* src, Op** ops) {
   OptimizationInfo optimiziation_info = {
     .first_input_op = NULL,
+    .overflow_ops = NULL,
   };
   int prunes_n = 0;
   int merges_n = 0;
