@@ -8,6 +8,11 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+static int merge_ops(Op** ops) {
+  /* TODO */
+  return 0;
+}
+
 static int should_prune(const Op* op) {
   assert(op);
 
@@ -38,19 +43,21 @@ static int should_prune(const Op* op) {
 /*
  * Finds operations that are useless to keep.
  * 
- * Returns a pruned subset of `ops`, others are freed of course.
+ * Returns how many times we pruned.
  */
-static Op* prune_null_ops(Source* src, Op* ops) {
+static int prune_null_ops(Source* src, Op** ops) {
   Op* op = NULL;
   Op* next = NULL;
   Op* previous = NULL;
-  Op* first_op = ops;
+  Op* first_op = NULL;
+  int prunes_count = 0;
 
   /* There is special logic if we need to prune the first op. */
-  first_op = ops;
+  first_op = *ops;
   while (first_op && should_prune(first_op)) {
     LOG_PRUNE(src, first_op);
 
+    ++prunes_count;
     next = first_op->next;
     free(op);
     first_op = next;
@@ -70,6 +77,7 @@ static Op* prune_null_ops(Source* src, Op* ops) {
       LOG_PRUNE(src, op);
       
       assert(previous); /* Must always exist. */
+      ++prunes_count;
       previous->next = op->next;
       free(op);
     } else {
@@ -78,7 +86,8 @@ static Op* prune_null_ops(Source* src, Op* ops) {
   }
 
 done_:
-  return first_op;
+  *ops = first_op;
+  return prunes_count;
 }
 
 static void warn_overflows(Source* src, Op* ops) {
@@ -122,7 +131,9 @@ OptimizationInfo optimize_ops(Source* src, Op** ops) {
     .first_input_op = NULL,
   };
 
-  *ops = prune_null_ops(src, *ops);
+  do {
+    merge_ops(ops);
+  } while (prune_null_ops(src, ops));
 
   optimiziation_info.first_input_op = find_first_input_op(*ops);
   if (optimiziation_info.first_input_op) {
