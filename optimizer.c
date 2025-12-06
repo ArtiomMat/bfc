@@ -8,9 +8,53 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-static int merge_ops(Op** ops) {
-  /* TODO */
-  return 0;
+/*
+ * Merges operations that are next to each other and are identical.
+ * Situations like this can happen as a result of pruning some instructions,
+ * causing separated ones to now become paired.
+ *
+ * Returns the amount of merges, i.e. how many ops were merged and removed.
+ *
+ * The reason it's not `Op**` is because we merge to the right,
+ * so it's guaranteed that the first `Op` always remains.
+ */
+static int merge_ops(Source* src, Op* ops) {
+  Op* op = NULL;
+  Op* next = NULL;
+  Op* tmp_op = NULL;
+  int merges_n = 0;
+
+  if (!ops) {
+    return 0;
+  }
+
+  for (op = ops; op && op->next; op = next) {
+    if (op->next->type == op->type) {
+      switch (op->type) {
+      case OP_MUTATE:
+      case OP_MOVE:
+      case OP_INPUT:
+      case OP_PRINT:
+        ++merges_n;
+        set_source_i(src, op->next);
+        log_debug(src, "optimizer: Merging this %s sequence into previous sequence.", str_from_op_type(op->type));
+
+        op->n += op->next->n;
+        op->src_end = op->src_end;
+        tmp_op = op->next;
+        op->next = op->next->next;
+        free(tmp_op);
+        break;
+
+      default:
+        break;
+      }
+    }
+
+    next = op->next;
+  }
+
+  return merges_n;
 }
 
 static int should_prune(const Op* op) {
@@ -131,10 +175,13 @@ OptimizationInfo optimize_ops(Source* src, Op** ops) {
   OptimizationInfo optimiziation_info = {
     .first_input_op = NULL,
   };
+  int prunes_n = 0;
+  int merges_n = 0;
 
   do {
-    merge_ops(ops);
-  } while (prune_null_ops(src, ops));
+    prunes_n = prune_null_ops(src, ops);
+    merges_n = merge_ops(src, *ops);
+  } while (prunes_n || merges_n);
 
   optimiziation_info.first_input_op = find_first_input_op(*ops);
   if (optimiziation_info.first_input_op) {
