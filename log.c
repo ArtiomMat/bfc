@@ -1,5 +1,6 @@
 #include "log.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdarg.h>
 
@@ -63,7 +64,7 @@ void log_debug(const Source* src, const char* fmt, ...) {
   va_list args;
 
   va_start(args, fmt);
-  bfc_log(stderr, LOG_LEVEL_DEBUG, src, fmt, args);
+  bfc_log(stdout, LOG_LEVEL_DEBUG, src, fmt, args);
   va_end(args);
 }
 
@@ -71,7 +72,12 @@ void log_warn(const Source* src, const char* fmt, ...) {
   va_list args;
 
   va_start(args, fmt);
-  bfc_log(stderr, LOG_LEVEL_WARN, src, fmt, args);
+  bfc_log(stdout, LOG_LEVEL_WARN, src, fmt, args);
   va_end(args);
+
+  if (src->i_end > src->i) {
+    assert(src->i < src->len);
+    printf("\t%.*s\n", src->i_end - src->i, src->text + src->i);
+  }
 }
 
