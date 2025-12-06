@@ -40,7 +40,7 @@ static int merge_ops(Source* src, Op* ops) {
         log_debug(src, "optimizer: Merging this %s sequence into previous sequence.", str_from_op_type(op->type));
 
         op->n += op->next->n;
-        op->src_end = op->src_end;
+        op->src_end = op->next->src_end;
         tmp_op = op->next;
         op->next = op->next->next;
         free(tmp_op);
