@@ -49,7 +49,12 @@ void bfc_log(FILE* f, const LogLevel level, const Source* src, const char* fmt, 
   }
 
   vfprintf(f, fmt, args);
-  putc('\n', stdout);
+  putc('\n', f);
+
+  if (src->i_end > src->i) {
+    assert(src->i < src->len);
+    fprintf(f, "\t%.*s\n", src->i_end - src->i, src->text + src->i);
+  }
 }
 
 void log_error(const Source* src, const char* fmt, ...) {
@@ -74,10 +79,5 @@ void log_warn(const Source* src, const char* fmt, ...) {
   va_start(args, fmt);
   bfc_log(stdout, LOG_LEVEL_WARN, src, fmt, args);
   va_end(args);
-
-  if (src->i_end > src->i) {
-    assert(src->i < src->len);
-    printf("\t%.*s\n", src->i_end - src->i, src->text + src->i);
-  }
 }
 
