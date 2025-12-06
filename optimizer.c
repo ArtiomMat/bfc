@@ -1,6 +1,7 @@
 #include "optimizer.h"
 #include "log.h"
 #include "op.h"
+#include "parameters.h"
 #include "source.h"
 
 #include <assert.h>
@@ -78,6 +79,30 @@ static Op* prune_null_ops(Source* src, Op* ops) {
 
 done_:
   return first_op;
+}
+
+static void warn_overflows(Source* src, Op* ops) {
+  Op* op;
+
+  for (op = ops; op; op = op->next) {
+    switch (op->type) {
+    case OP_MOVE:
+    case OP_MUTATE:
+      set_source_i(src, op);
+
+      if (op->n > MAX_BF_BYTE || op->n < -MAX_BF_BYTE) {
+        log_warn(src, "optimizer: %s sequence causes overflow(%d).", str_from_op_type(op->type), op->n);
+
+        if (G_PARAMETERS.overflow_behavior == OVERFLOW_BEHAVIOR_ABORT) {
+          log_warn(src, "optimizer: Regarding above warning, this guarantees eventual abort due to the configured overflow behavior");
+        }
+      }
+      break;
+
+    default:
+      break;
+    }
+  }
 }
 
 static Op* find_first_input_op(Op* ops) {

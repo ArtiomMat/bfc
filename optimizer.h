@@ -7,6 +7,11 @@
 /* TODO: Prune null OP_MUTATE and OP_MOVE, if their n is 0. */
 /* TODO: Optimize logical flows that are never reached. */
 
+typedef struct OpReference {
+    struct OpReference* next;
+    Op* op;
+} OpReference;
+
 /*
  * There is some, but little, that the optimizer does on the `Op` level,
  * since it's already such a minimal instruction set.
@@ -22,6 +27,11 @@ typedef struct {
      * If valid, then everything up to that `Op` can be cached.
      */
     Op* first_input_op;
+
+    /*
+     * Ops that are guaranteed to cause overflow
+     */
+    OpReference* overflow_ops;
 } OptimizationInfo;
 
 /*
