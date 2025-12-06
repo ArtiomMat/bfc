@@ -140,7 +140,7 @@ OptimizationInfo optimize_ops(Source* src, Op** ops) {
     set_source_i(src, optimiziation_info.first_input_op);
     log_debug(src, "optimizer: All code up to here can be evaluated at compile-time.");
   } else {
-    log_debug(src, "optimizer: The entire program is can be evaluated at compile-time.");
+    log_debug(src, "optimizer: The entire program can be evaluated at compile-time.");
   }
 
   return optimiziation_info;
