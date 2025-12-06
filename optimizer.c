@@ -69,6 +69,7 @@ static int prune_null_ops(Source* src, Op** ops) {
   
   assert(!should_prune(first_op)); /* Sanity check */
 
+  previous = first_op;
   /* We have asserted that we can skip the first one */
   for (op = first_op->next; op; op = next) {
     next = op->next;
