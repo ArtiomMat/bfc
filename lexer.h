@@ -11,4 +11,4 @@
  */
 int lex(Source* src, Op** first_op_ptr);
 
-#endif /* define BFC_LEXER_H */
+#endif /* ifndef BFC_LEXER_H */

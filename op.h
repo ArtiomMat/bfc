@@ -71,4 +71,4 @@ const char* str_from_op_type(OpType type);
 
 void free_ops(Op* ops);
 
-#endif /* define BFC_OP_H */
+#endif /* ifndef BFC_OP_H */

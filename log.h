@@ -28,5 +28,5 @@ void log_warn(const Source* src, const char* fmt, ...);
 
 void log_debug(const Source* src, const char* fmt, ...);
 
-#endif /* define BFC_LOG_H */
+#endif /* ifndef BFC_LOG_H */
 

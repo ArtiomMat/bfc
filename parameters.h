@@ -21,6 +21,6 @@ typedef struct {
 
 extern Parameters G_PARAMETERS;
 
-#endif /* define BFC_PARAMETERS_H */
+#endif /* ifndef BFC_PARAMETERS_H */
 
 

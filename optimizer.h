@@ -42,4 +42,4 @@ typedef struct {
  */
 OptimizationInfo optimize_ops(Source* src, Op** ops);
 
-#endif /* define BFC_OPTIMIZER_H */
+#endif /* ifndef BFC_OPTIMIZER_H */
