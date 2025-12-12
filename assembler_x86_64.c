@@ -174,6 +174,8 @@ static void write_ifs_op_codes(Op* if_0_op, Op* if_not_0_op) {
   create_io_buf(&if_not_0_op->code);
   write_test_at_sp(&if_not_0_op->code);
 
+  /* FIXME: Jumps are not correct */
+
   if (sizes_sum < 128) {
     write_jz_short_imm8(&if_0_op->code, sizes_sum);
     write_jnz_short_imm8(&if_not_0_op->code, -sizes_sum);
