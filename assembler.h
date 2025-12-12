@@ -2,21 +2,21 @@
 #define BFC_ASSEMBLER_H
 
 #include "op.h"
-#include "bfc.h"
+#include "io_buf.h"
 #include "optimizer.h"
 
 typedef struct {
   /*
-   * Code segment, entry point can be considered at [0].
+   * Code segment, entry point can be considered at `[0]`.
    */
-  SizedBuf code;
+  IoBuf code;
 
   /*
    * Initial stack state, cached.
    *
    * `NULL` would mean there is none.
    */
-  SizedBuf initial_stack;
+  IoBuf initial_stack;
 } AssemblerResult;
 
 typedef struct Assembler {
