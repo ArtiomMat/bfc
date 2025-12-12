@@ -1,6 +1,8 @@
 #ifndef BFC_OP_H
 #define BFC_OP_H
 
+#include "io_buf.h"
+
 typedef enum {
   /* NULL equivalent for OpType */
   OP_INVALID,
@@ -57,7 +59,14 @@ typedef struct Op {
    * NOTE: Operation may be any amount of bytes, and can be variable even
    * for the same `type`, if presented with optimization opportunities.
    */
-  int vaddress;
+  /* int vaddress; */
+
+  /*
+   * For the assembler, at first is uninitialized.
+   *
+   * The assembler writes the machine code here
+   */
+  IoBuf code;
 } Op;
 
 /*

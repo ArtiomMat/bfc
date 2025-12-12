@@ -1,6 +1,7 @@
 /* A brainfuck compiler written in ANSI-C */
 
 #include "bfc.h"
+#include "assembler.h"
 #include "log.h"
 #include "op.h"
 #include "lexer.h"
@@ -8,6 +9,9 @@
 #include "source.h"
 
 #include <stdlib.h>
+
+/* TODO: Hardcoded */
+void assemble_x86_64(Assembler* self, AssemblerResult* result);
 
 /* TODO: In x86 ADD sets ZF=1 if src+dst=0, so if the last operation is guaranteed to be ADD for
  * the bytes(and not ADD for the stack pointer) we can skip CMP and do only JZ/JNZ for [/].
@@ -22,6 +26,7 @@ int main(const int argc, const char** argv) {
   int success = 1;
   Source src;
   OptimizationInfo optimization_info;
+  Assembler assembler = {0};
 
   if (argc < 2) {
     log_error(0, "Missing file!");
@@ -43,6 +48,10 @@ int main(const int argc, const char** argv) {
   }
 
   optimization_info = optimize_ops(&src, &ops);
+
+  /* TODO: Hardcoded */
+  assembler.ops = ops;
+  assemble_x86_64(&assembler, NULL);
 
 done_:
   if (ops) {

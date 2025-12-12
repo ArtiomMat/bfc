@@ -21,9 +21,9 @@ typedef struct {
 
 typedef struct Assembler {
   OptimizationInfo optimization_info;
-  const Op* ops;
+  Op* ops;
   
-  AssemblerResult (*assemble)(const struct Assembler* self);
+  void (*assemble)(struct Assembler* self, AssemblerResult* result);
 } Assembler;
 
 extern const Assembler G_X86_ASSEMBLER;

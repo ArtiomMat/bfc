@@ -10,7 +10,7 @@ void reset_op(Op* op) {
   /* 0 because of Source.i_end spec */
   op->src_end = 0;
   op->n = 0;
-  op->vaddress = 0;
+  op->code = NULL_IO_BUF;
 }
 
 OpType op_type_from_c(const char c) {
