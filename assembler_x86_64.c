@@ -15,17 +15,20 @@ static void write_add_imm8_at_rsp(IoBuf* buf, int imm) {
   write_byte_to_buf(buf, imm);
 }
 
-static void write_add_imm8_to_sp(IoBuf* buf, int imm) {
-  const char template[] = { 0x66, 0x83, 0xc4 };
+static void write_add_imm32_to_rsp(IoBuf* buf, int imm) {
+  const char template[] = { 0x48, 0x81, 0xc4 };
 
+  /* TODO: Make it cross platform with endianess changes and use int32 */
+  assert(sizeof (imm) == 4);
   write_to_buf(buf, template, sizeof (template));
-  write_byte_to_buf(buf, imm);
+  write_to_buf(buf, &imm, 4);
 }
 
 static void write_jz_near_imm32(IoBuf* buf, int imm) {
   const char template[] = { 0x0f, 0x84 };
 
   assert(sizeof (imm) == 4);
+  write_to_buf(buf, template, sizeof (template));
   /* TODO: Make it cross platform with endianess changes and use int32 */
   write_to_buf(buf, &imm, 4);
 }
@@ -39,6 +42,7 @@ static void write_jnz_near_imm32(IoBuf* buf, int imm) {
   const char template[] = { 0x0f, 0x85 };
 
   assert(sizeof (imm) == 4);
+  write_to_buf(buf, template, sizeof (template));
   /* TODO: Make it cross platform with endianess changes and use int32 */
   write_to_buf(buf, &imm, 4);
 }
@@ -50,7 +54,7 @@ static void write_jnz_short_imm8(IoBuf* buf, int imm) {
 
 static void write_test_at_sp(IoBuf* buf) {
   const char template[] = {
-    0xa, 0x04, 0x24, /* mov al, [rsp] */
+    0x8a, 0x04, 0x24, /* mov al, [rsp] */
     0x84, 0xc0 /* test al, al */
   };
 
@@ -108,7 +112,8 @@ static void write_op_code(Op* op) {
 
   switch (op->type) {
   case OP_MOVE:
-    write_add_imm8_to_sp(&op->code, op->n);
+    /* -op->n because the stack goes up */
+    write_add_imm32_to_rsp(&op->code, -op->n);
     break;
   
   case OP_MUTATE:
@@ -171,10 +176,10 @@ static void write_ifs_op_codes(Op* if_0_op, Op* if_not_0_op) {
 
   if (sizes_sum < 128) {
     write_jz_short_imm8(&if_0_op->code, sizes_sum);
-    write_jnz_short_imm8(&if_0_op->code, -sizes_sum);
+    write_jnz_short_imm8(&if_not_0_op->code, -sizes_sum);
   } else {
     write_jz_near_imm32(&if_0_op->code, sizes_sum);
-    write_jnz_near_imm32(&if_0_op->code, -sizes_sum);
+    write_jnz_near_imm32(&if_not_0_op->code, -sizes_sum);
   }
 }
 
