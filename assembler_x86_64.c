@@ -6,6 +6,20 @@
 #include <assert.h>
 #include <stdio.h>
 
+/*
+ * Due to jumps being relative to the NEXT instruction after
+ * the jumps, we need to store these magical constants, which
+ * aren't that magical.
+ *
+ * These constants is just the size in bytes that an [ or ]
+ * take up in the final machine code, that includes
+ * the `mov al, [rsp]`, `test al, al` and `je/jne ...`.
+ */
+/* The short version has an imm8 for the jump */
+#define IF_OP_CODE_SIZE_SHORT (7)
+/* The near version has an imm32 for the jump */
+#define IF_OP_CODE_SIZE_NEAR (11)
+
 /* TODO: Can only compile with 1 byte. */
 
 static void write_add_imm8_at_rsp(IoBuf* buf, int imm) {
@@ -106,6 +120,8 @@ static void write_exit_fail_syscall(IoBuf* buf) {
 }
 
 static void write_op_code(Op* op) {
+  int i = 0;
+
   assert(!op->code.ptr); /* op->code must be NULL_IO_BUF */
 
   create_io_buf(&op->code);
@@ -122,11 +138,15 @@ static void write_op_code(Op* op) {
 
   /* TODO: OP_PRINT/INPUT don't support n>1 */
   case OP_PRINT:
-    write_write_syscall(&op->code);
+    for (i = 0; i < op->n; ++i) {
+      write_write_syscall(&op->code);
+    }
     break;
 
   case OP_INPUT:
-    write_read_syscall(&op->code);
+    for (i = 0; i < op->n; ++i) {
+      write_read_syscall(&op->code);
+    }
     break;
 
   case OP_IF_NOT_0:
@@ -176,10 +196,16 @@ static void write_ifs_op_codes(Op* if_0_op, Op* if_not_0_op) {
 
   /* FIXME: Jumps are not correct */
 
-  if (sizes_sum < 128) {
+  /*
+   * We add IF_OP_CODE_SIZE_SHORT because it is also included as part of the short jump.
+   * HISTORY: Not including it caused such a horrible edge case that took so much time to debug.
+   */
+  if (sizes_sum + IF_OP_CODE_SIZE_SHORT < 128) {
+    sizes_sum += IF_OP_CODE_SIZE_SHORT;
     write_jz_short_imm8(&if_0_op->code, sizes_sum);
     write_jnz_short_imm8(&if_not_0_op->code, -sizes_sum);
   } else {
+    sizes_sum += IF_OP_CODE_SIZE_NEAR;
     write_jz_near_imm32(&if_0_op->code, sizes_sum);
     write_jnz_near_imm32(&if_not_0_op->code, -sizes_sum);
   }
@@ -243,13 +269,21 @@ void assemble_x86_64(Assembler* self, AssemblerResult* result) {
       op = recursive_write_if_op_codes(op);
       assert(op);
     }
+
   }
 
   /* TODO: Delete */
+  IoBuf code;
+  create_io_buf(&code);
+  write_add_imm32_to_rsp(&code, -30000);
+
   FILE* f = fopen("bfcbin", "wb");
   for (op = self->ops; op; op = op->next) {
-    fwrite(op->code.ptr, 1, op->code.size, f);
+    write_to_buf(&code, op->code.ptr, op->code.size);
   }
+  write_exit_success_syscall(&code);
+
+  fwrite(code.ptr, 1, code.size, f);
   fclose(f);
 }
 
