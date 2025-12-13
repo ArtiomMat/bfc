@@ -1,15 +1,25 @@
 CC = gcc
-CFLAGS = -std=c89 -ggdb -Wall
-SRCS = $(wildcard *.c)
-OBJS = $(SRCS:.c=.o)
+CFLAGS = -std=c89 -ggdb -Wall -pedantic
+OBJDIR = obj
+SRCDIR = src
 
-all: bfc
+SRCS = $(wildcard $(SRCDIR)/*.c)
+OBJS = $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SRCS))
+HEADERS = $(wildcard $(SRCDIR)/*.h)
+
+.PHONY: all bfc clean
+
+all: $(OBJDIR) bfc
+
+$(OBJDIR):
+	mkdir -p $(OBJDIR)
 
 bfc: $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
 
-%.o: %.c $(wildcard *.h)
-	$(CC) $(CFLAGS) -c $<
+$(OBJDIR)/%.o: $(SRCDIR)/%.c $(HEADERS) | $(OBJDIR)
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJS) program
+	rm -rf $(OBJDIR)
+	rm -f bfc
