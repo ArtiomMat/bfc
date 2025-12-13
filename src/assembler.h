@@ -26,7 +26,7 @@ typedef struct Assembler {
   void (*assemble)(struct Assembler* self, AssemblerResult* result);
 } Assembler;
 
-extern const Assembler G_X86_ASSEMBLER;
+extern const Assembler G_X86_64_ASSEMBLER_TEMPLATE;
 
 #endif /* ifndef BFC_ASSEMBLER_H */
 

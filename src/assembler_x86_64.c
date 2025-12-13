@@ -20,7 +20,15 @@
 /* The near version has an imm32 for the jump */
 #define IF_OP_CODE_SIZE_NEAR (11)
 
-/* TODO: Can only compile with 1 byte. */
+/* How much we move the stack pointer initially */
+#define INITIAL_STACK_FRAME (30000)
+
+void assemble_x86_64(Assembler* self, AssemblerResult* result);
+const Assembler G_X86_64_ASSEMBLER_TEMPLATE = {
+  .ops = NULL,
+  .optimization_info = {0},
+  .assemble = assemble_x86_64
+};
 
 static void write_add_imm8_at_rsp(IoBuf* buf, int imm) {
   const char template[] = { 0x80, 0x04, 0x24 };
@@ -194,17 +202,17 @@ static void write_ifs_op_codes(Op* if_0_op, Op* if_not_0_op) {
   create_io_buf(&if_not_0_op->code);
   write_test_at_sp(&if_not_0_op->code);
 
-  /* FIXME: Jumps are not correct */
-
   /*
    * We add IF_OP_CODE_SIZE_SHORT because it is also included as part of the short jump.
    * HISTORY: Not including it caused such a horrible edge case that took so much time to debug.
    */
   if (sizes_sum + IF_OP_CODE_SIZE_SHORT < 128) {
+    /* We can fit the jump in a short jump */
     sizes_sum += IF_OP_CODE_SIZE_SHORT;
     write_jz_short_imm8(&if_0_op->code, sizes_sum);
     write_jnz_short_imm8(&if_not_0_op->code, -sizes_sum);
   } else {
+    /* Gotta use the 32 bit near jump */
     sizes_sum += IF_OP_CODE_SIZE_NEAR;
     write_jz_near_imm32(&if_0_op->code, sizes_sum);
     write_jnz_near_imm32(&if_not_0_op->code, -sizes_sum);
@@ -254,6 +262,9 @@ static Op* recursive_write_if_op_codes(Op* if_0_op) {
 void assemble_x86_64(Assembler* self, AssemblerResult* result) {
   Op* op = NULL;
 
+  assert(self);
+  assert(result);
+
   for (op = self->ops; op; op = op->next) {
     if (op->type == OP_IF_0 || op->type == OP_IF_NOT_0) {
       /* Reserved for another pass where we know how much to jump */
@@ -269,21 +280,21 @@ void assemble_x86_64(Assembler* self, AssemblerResult* result) {
       op = recursive_write_if_op_codes(op);
       assert(op);
     }
-
   }
+
+  /* Finish up by copying everythin to the code buffer */
+  create_io_buf(&result->code);
+
+  write_add_imm32_to_rsp(&result->code, -INITIAL_STACK_FRAME);
+
+  for (op = self->ops; op; op = op->next) {
+    write_to_buf(&result->code, op->code.ptr, op->code.size);
+  }
+  write_exit_success_syscall(&result->code);
 
   /* TODO: Delete */
-  IoBuf code;
-  create_io_buf(&code);
-  write_add_imm32_to_rsp(&code, -30000);
-
   FILE* f = fopen("bfcbin", "wb");
-  for (op = self->ops; op; op = op->next) {
-    write_to_buf(&code, op->code.ptr, op->code.size);
-  }
-  write_exit_success_syscall(&code);
-
-  fwrite(code.ptr, 1, code.size, f);
+  fwrite(result->code.ptr, 1, result->code.size, f);
   fclose(f);
 }
 
