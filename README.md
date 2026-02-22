@@ -10,23 +10,20 @@ Designed to provide maximum execution speed with tiny executables, optimizing fo
 
 ## Scope
 
+While unfinished, modular and has the ability to support other architectures, optimizations and operating systems.
+
 - [x] Custom & integrated backend.
 - [ ] Cross compilation built-in.
-  - [ ] ELF.
+  - [x] ELF.
   - [ ] PE(EXE).
   - [ ] Mach-O.
 - [ ] Cross architecture.
-  - [ ] Intel/AMD family.
+  - [x] Intel/AMD family.
   - [ ] ARM
   - [ ] RISCv.
 - [ ] Optimization.
-  - [ ] Architecture specific machine-code optimization for size and speed.
+  - [x] Architecture specific machine-code optimization for size and speed.
   - [ ] Vectorization (is it worth it enough though?).
   - [ ] Dead code elimination.
-  - [ ] NOP elimination.
-- [ ] Fast compilation.
-
-## TODO
-
-- [ ] Remove `G_ERROR` use return codes.
-- [ ] Implement optimizer stage.
+  - [x] NOP elimination.
+- [x] Fast compilation.
